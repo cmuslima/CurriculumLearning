@@ -49,13 +49,13 @@ class agent():
      
         return movement, index_of_action
 
-    def e_greedy_action_selection(self,state, env):
+    def e_greedy_action_selection(self,state, env, eps):
 
         state_tuple= tuple(state)
         
       
         # Epsilon-greedy action selection
-        if np.random.random() > self.eps:
+        if np.random.random() > eps:
             
             movement, index_of_action = self.argmax(self.q_matrix[state_tuple], env)
             return movement, index_of_action
@@ -84,7 +84,7 @@ class agent():
 
 
     def act(self, state, env):
-        movement, index_of_action =self.e_greedy_action_selection(state, env)
+        movement, index_of_action =self.e_greedy_action_selection(state, env, self.eps)
         return movement, index_of_action
 
     def step(self, state, action_index, action_movement, env): #should return next_state, reward, done

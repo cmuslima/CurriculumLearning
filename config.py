@@ -1,8 +1,10 @@
 import sys
 import argparse
+from run_teacher_training_loop import run
+from evaluate_teacher import run_evaluate_teacher
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--rootdir', type=str, default= '/Users/cmuslimani/Projects/Curriculum_MDP/Tabular/debug/four_rooms')
+parser.add_argument('--rootdir', type=str, default= '/Users/cmuslimani/Projects/Curriculum_MDP/Tabular/working_copy/four_rooms')
 parser.add_argument('--experiment_folder', type=str, default= 'new-reward-function/log-based/optimal/random-initalization/fixed-student-seed/action_return')
 parser.add_argument('--env', type=str, default= 'four_rooms')
 parser.add_argument('--SR', type=str, default= 'action_return')
@@ -14,44 +16,26 @@ parser.add_argument('--discount', type=float, default= .99)
 parser.add_argument('--num_training_episodes', type=int, default= 1)
 parser.add_argument('--debug', type=bool, default= False)
 parser.add_argument('--runs', type=int, default= 15)
+parser.add_argument('--lr', type=float, default= .001)
+parser.add_argument('--alpha', type=float, default= 1.25)
+parser.add_argument('--batchsize', type=int, default= 64)
+parser.add_argument('--max_time_step', type=int, default= 24) #or 40
+parser.add_argument('--random_curriculum', type=bool, default = False)
 
 parser.add_argument('--random_curr', type=bool, default = False)
 parser.add_argument('--target_only', type=bool, default = False)
 parser.add_argument('--reward_function', type=str, default = 'cost')
-
+parser.add_argument('--one_hot_action_vector', type=bool, default = True)
+parser.add_argument('--easy_initialization', type=bool, default = True)
+parser.add_argument('--training', type=bool, default = True)
+parser.add_argument('--evaluation', type=bool, default = True)
 
 
 args = parser.parse_args()
 
+if args.training:
+    run(args)
 
-env = args.env
-if env == 'maze':
-    max_time_step = 40
-else:
-    max_time_step = 24
-SR = args.SR
+if args.evaluation:
+    evaluate_teacher(args)
 
-teacher_episodes = args.teacher_episodes
-student_episodes = args.student_episodes
-optimal_target_threshold = args.optimal_target_threshold
-num_training_episodes = args.num_training_episodes
-runs = args.runs
-debug = args.debug
-reward_log = args.reward_log
-target_only = args.target_only
-random_curriculum = args.random_curr
-rootdir = args.rootdir
-experiment_folder = args.experiment_folder
-reward_function = args.reward_function
-discount = args.discount
-print('Updated Config to:')
-print(f'root dir {rootdir}, experiment folder {experiment_folder}')
-print(f'Environment {env}, State representation {SR}, number of teacher episodes {teacher_episodes}')
-print(f'number of student episodes  {student_episodes}, number runs {runs}')
-
-print('random curr?', random_curriculum)
-print('target only', target_only)
-print('reward function', reward_function)
-print('max time steps for student', max_time_step)
-print('num training episodes', num_training_episodes)
-print('reward log', reward_log)

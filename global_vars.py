@@ -1,5 +1,4 @@
 import numpy as np
-import config
 from env import lavaworld, four_rooms, expanded_four_rooms, maze
 from scipy import stats
 import math
@@ -7,14 +6,14 @@ import math
 #This class creates the environment (four rooms, maze, etc) and has most of the 
 #functions for getting the teaacher interaction (i.e getting reward, getting next trajectory)
 class env_variables():
-    def __init__(self):
+    def __init__(self, args):
         self.shortest_path_approach = False # not used
         self.ALP_dict = dict()
         self.returns_dict = dict()
-        self.env = config.env
+        self.env = args.env
         self.rows = 0
         self.columns = 0
-        self.SR = config.SR
+        self.SR = args.SR
         self.ALP_list = list() #not used
         self.cost_list = list() #not used
 
@@ -28,20 +27,22 @@ class env_variables():
         self.eps_end=0.01
         self.eps_decay=0.99
 
-        self.live_env = self.make_env()
+        self.one_hot_action_vector = args.one_hot_action_vector
+        self.live_env = self.make_env(args)
         print('self.live env', self.live_env)
-        self.alpha = None
-        self.one_hot_vector = False
+        self.alpha = args.alpha
+        
+
 
         self.state_SF = [0]*self.teacher_action_size
-        self.success_converge = 0
+        self.success_converge = 0 #not used 
         self.stagnation_threshold = 3
         self.target_task_success_threshold = None
         self.policy_table= dict()
-        self.reward_function = config.reward_function
+        self.reward_function = args.reward_function
         
 
-    def configure_env_paramters(self):
+    def configure_env_paramters(self, args):
 
         if self.env == 'four_rooms':
             self.rows = 7
@@ -59,7 +60,7 @@ class env_variables():
             self.columns = 16
             self.teacher_action_list = [np.array([10,4]),np.array([1,1]), np.array([5,1]), np.array([9,1]),np.array([7,5]), np.array([3,6]), np.array([5,10]), np.array([2,12]), np.array([10,8]),  np.array([10,14]),  np.array([7,13])]
         
-        if config.debug:
+        if args.debug:
             print(f'env = {self.env}')
         self.teacher_action_size = len(self.teacher_action_list)
         self.initalize_state_space()
@@ -141,8 +142,8 @@ class env_variables():
             self.state_size = self.columns*self.rows*self.student_num_actions + self.teacher_action_size + 2 
     
         print(f'Using State Representation: {self.SR}')
-    def make_env(self):
-        self.configure_env_paramters()
+    def make_env(self, args):
+        self.configure_env_paramters(args)
         if self.env == 'four_rooms':
             env = four_rooms(self.rows, self.columns, oneDmaze=False)
         elif self.env == 'expanded_fourrooms':
@@ -158,11 +159,11 @@ class env_variables():
         
         return teacher_action_array
 
-    def get_traj_prime(self, teacher_action_int, source_task_score, student_agent, reward, target_task_success, time_step, updated_ALP):
+    def get_traj_prime(self, teacher_action_int, source_task_score, student_agent, reward, target_task_success, time_step, updated_ALP, args):
 
         if self.SR == 'SF_with_time_step':
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
                 statelist =  one_hot_vector + [time_step, reward, updated_ALP, target_task_success] +  self.state_SF #all_actions_average_ALP 
             else:
                 statelist =  [teacher_action_int, time_step, reward, updated_ALP, target_task_success] +  self.state_SF #all_actions_average_ALP 
@@ -171,7 +172,7 @@ class env_variables():
         
         elif self.SR == 'SF_no_time_step':
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
                 statelist =  one_hot_vector + [reward, updated_ALP, target_task_success] +  self.state_SF #all_actions_average_ALP 
             else:
                 statelist =  [teacher_action_int,reward, updated_ALP, target_task_success] +  self.state_SF #all_actions_average_ALP 
@@ -180,8 +181,8 @@ class env_variables():
         
         elif self.SR == 'action_return':
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
-                if config.debug:
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
+                if args.debug:
                     print(f'one hot vector for action {teacher_action_int} = {one_hot_vector}')
                 traj_prime = one_hot_vector + [source_task_score]
             else:
@@ -192,8 +193,8 @@ class env_variables():
         elif self.SR == 'action_return_SF':
 
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
-                if config.debug:
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
+                if args.debug:
                     print(f'one hot vector for action {teacher_action_int} = {one_hot_vector}')
                 traj_prime = one_hot_vector + [source_task_score] + self.state_SF
             else:
@@ -204,14 +205,14 @@ class env_variables():
 
         elif self.SR == 'action_return_time_step':
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
                 traj_prime = one_hot_vector + [source_task_score, time_step]
             else:
                 traj_prime = [teacher_action_int, source_task_score, time_step] 
             traj_prime = np.array(traj_prime)
         elif self.SR == 'action_return_reward_SF':
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
                 traj_prime = one_hot_vector + [source_task_score, reward] + self.state_SF
             else:
                 traj_prime = [teacher_action_int, source_task_score, reward] + self.state_SF
@@ -219,7 +220,7 @@ class env_variables():
             traj_prime = np.array(traj_prime)
         elif self.SR == 'action_return_time_step_SF':
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
                 traj_prime = one_hot_vector + [source_task_score, time_step] + self.state_SF
             else:
                 traj_prime = [teacher_action_int, source_task_score, time_step] + self.state_SF
@@ -227,7 +228,7 @@ class env_variables():
             traj_prime = np.array(traj_prime)
         elif self.SR == 'action_return_reward_time_step_SF':
             if self.one_hot_action_vector:
-                one_hot_vector = self.one_hot_action_vector(teacher_action_int)
+                one_hot_vector = self.get_one_hot_action_vector(teacher_action_int)
                 traj_prime = one_hot_vector + [source_task_score, reward, time_step] + self.state_SF
             else:
                 traj_prime = [teacher_action_int, source_task_score, reward, time_step] + self.state_SF
@@ -258,19 +259,19 @@ class env_variables():
             traj_prime = np.reshape(traj_prime, (1,self.state_size)) 
 
         elif self.SR == 'policy_table':
-            policy_table_values = self.get_policy_table(student_agent)
+            policy_table_values = self.get_policy_table(student_agent, args)
             traj_prime = np.array(policy_table_values) 
             traj_prime = np.reshape(traj_prime, (1,self.state_size)) 
         
         elif self.SR == 'policy_table_SF':
-            policy_table_values = self.get_policy_table(student_agent)
+            policy_table_values = self.get_policy_table(student_agent, args)
             traj_prime = np.array(policy_table_values) 
             traj_prime = np.append(traj_prime,self.state_SF)
 
             traj_prime = np.reshape(traj_prime, (1,self.state_size)) 
 
         elif self.SR == 'policy_table_action_return':
-            policy_table_values = self.get_policy_table(student_agent)
+            policy_table_values = self.get_policy_table(student_agent, args)
             traj_prime = np.array(policy_table_values) 
 
             action_return = [teacher_action_int, source_task_score]
@@ -278,25 +279,25 @@ class env_variables():
             traj_prime = np.reshape(traj_prime, (1,self.state_size))
 
         elif self.SR == 'policy_table_action_return_SF':
-            policy_table_values = self.get_policy_table(student_agent)
+            policy_table_values = self.get_policy_table(student_agent, args)
             traj_prime = np.array(policy_table_values) 
 
             action_return_SF = self.state_SF + [teacher_action_int, source_task_score]
             traj_prime = np.append(traj_prime,action_return_SF)
             traj_prime = np.reshape(traj_prime, (1,self.state_size))
 
-        if config.debug:
+        if args.debug:
             print(f'using state rep = {self.SR}')
 
         return traj_prime
 
-    def get_policy_table(self, student_agent):
+    def get_policy_table(self, student_agent, args):
         for row_num in range(self.rows):
             for col_num in range(self.columns):
                 self.policy_table.update({(row_num,col_num): np.zeros([1,self.student_num_actions])})
                 max_action_index = np.argmax(student_agent.q_matrix[(row_num,col_num)])
                 self.policy_table[(row_num,col_num)][0][max_action_index] = 1
-                if config.debug:
+                if args.debug:
                     print(student_agent.q_matrix[(row_num, col_num)])
                     print('max action_index', max_action_index)
                     print(f'policy table {row_num},{col_num} = {self.policy_table[(row_num,col_num)]}')
@@ -326,30 +327,30 @@ class env_variables():
 
 
 
-    def determine_target_task_success_threshold(self):
+    def determine_target_task_success_threshold(self, args):
 
-        if config.optimal_target_threshold: 
+        if args.optimal_target_threshold: 
 
             if self.env == 'expanded_fourrooms' or self.env == 'four_rooms':
                 self.target_task_success_threshold = (.99)**15
             else:
                 self.target_task_success_threshold = (.99)**35
-            if config.debug:
+            if args.debug:
                 print(f'self.target_task_success_threshold is {self.target_task_success_threshold}')
         else:
             self.target_task_success_threshold = 0 
     
 
             
-    def check_for_success_on_target_task(self, target_task_score):
-        self.determine_target_task_success_threshold()
+    def check_for_success_on_target_task(self, target_task_score, args):
+        self.determine_target_task_success_threshold(args)
         if target_task_score > self.target_task_success_threshold:
             target_task_reward = 0
-            if config.debug:
+            if args.debug:
                 print('agent success on target task')
             success = True
         else:
-            if config.debug:
+            if args.debug:
                 print('agent failure at target task')
             target_task_reward = -1
             success = False
@@ -373,12 +374,12 @@ class env_variables():
         return normalized_value
 
 
-    def get_SF(self, teacher_action_array):
+    def get_SF(self, teacher_action_array, args):
         teacher_action_int = self.convert_teacher_action(teacher_action_array)
         teacher_action_array = str(teacher_action_array)
         length = len(self.ALP_dict[teacher_action_array])
         ALP_value_list = list(self.ALP_dict[teacher_action_array])
-        if config.debug:
+        if args.debug:
             print(f'ALP_value_list for action {teacher_action_array} = {ALP_value_list}')
         SF = 0 #stagnation factor
         
@@ -389,22 +390,22 @@ class env_variables():
                 SF = 0
        
         self.state_SF[teacher_action_int] = SF
-        if config.debug:
+        if args.debug:
             print(f'SF for action {teacher_action_int} = {SF}') 
             print(f'all SF = {self.state_SF}')
         return SF
 
-    def get_teacher_reward(self, teacher_action, ALP, target_task_score, source_task_cost):
-        target_task_reward, target_task_success = self.check_for_success_on_target_task(target_task_score)
+    def get_teacher_reward(self, teacher_action, ALP, target_task_score, args):
+        target_task_reward, target_task_success = self.check_for_success_on_target_task(target_task_score, args)
 
-        SF = self.get_SF(teacher_action)
+        SF = self.get_SF(teacher_action, args)
 
         if self.reward_function == 'LP_cost':  
 
             if SF >= self.stagnation_threshold and target_task_success == False: #this says I have converged and I have still failed on the target task, so I should probably avoid this task
-                if config.reward_log:
+                if args.reward_log:
                     reward = (-1)*math.log(10+SF) + target_task_reward #target_task_reward acts as the -1 cost signal 
-                    if config.debug:
+                    if args.debug:
                         print(f'log signal: {(-1)*math.log(10+SF)}, target task signal: {target_task_reward}')
                 else:
                     reward = -1 + target_task_reward #target_task_reward acts as the -1 cost signal
@@ -416,7 +417,7 @@ class env_variables():
 
 
         elif self.reward_function == "cost":
-            if config.debug:
+            if args.debug:
                 print('using regular reward function')
             #if the student agent has learned the target task, we give the teacher a reward of 0
             if target_task_success:
@@ -428,9 +429,9 @@ class env_variables():
 
         elif self.reward_function == "LP":
             if SF >= self.stagnation_threshold and target_task_success == False: #this says I have converged and I have still failed on the target task, so I should probably avoid this task
-                if config.reward_log:
+                if args.reward_log:
                     reward = (-1)*math.log(10+SF) 
-                    if config.debug:
+                    if args.debug:
                         print(f'log signal: {(-1)*math.log(10+SF)}, target task signal: {target_task_reward}')
                 else:
                     reward = -1 
@@ -454,18 +455,18 @@ class env_variables():
             return False, 0
 
 
-    def get_ALP(self, new_G, teacher_action):
+    def get_ALP(self, new_G, teacher_action, args):
         past_G = self.returns_dict.get(str(teacher_action)) #ALP dict stores the most recent student return on a particular env
         
         ALP = abs(new_G-past_G)
         reward = ALP
-        if config.debug:
+        if args.debug:
             print('returns dict', self.returns_dict)
             print('past return', past_G, 'return now', new_G, 'ALP', ALP)
         
         return reward 
 
-    def one_hot_action_vector(self, teacher_action_int):
+    def get_one_hot_action_vector(self, teacher_action_int):
         one_hot_vector = [0]*self.teacher_action_size
         one_hot_vector[teacher_action_int] =1 
         return one_hot_vector
