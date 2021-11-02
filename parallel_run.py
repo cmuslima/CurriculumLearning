@@ -18,7 +18,8 @@ if __name__ == '__main__':
     
     batchsize = [64] #[1.25]#0, 1, 1.5, 1.75]
    
-    pool.map(multiprocessing_func, batchsize)
+    pool.map(multiprocessing_func, batchsize) #this lets you run the code in parallel using different parameters
+                                               #here I was previously sweeping over the batch size param
     pool.close()
     print()
     print('Time taken = {} seconds'.format(time.time() - starttime))
