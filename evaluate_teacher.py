@@ -21,7 +21,7 @@ def run_evaluate_teacher(args):
         file = f'{args.rootdir}/{args.experiment_folder}/{subdir1}/teacher_agent_checkpoint_{args.reward_function}_{args.batchsize}_{args.lr}_{args.SR}_{seed}_{args.alpha}.pth'
         
         
-        evaluation_average_score, evaluation_teacher_data, final_teacher_score = eval_loop(num_teaching_episodes, file, seed)
+        evaluation_average_score, evaluation_teacher_data, final_teacher_score = eval_loop(num_teaching_episodes, file, seed, args)
         evaluation_scores_all_runs.append(evaluation_average_score)
         teacher_actions_all_runs.append(evaluation_teacher_data)
         teacher_score.append(final_teacher_score)

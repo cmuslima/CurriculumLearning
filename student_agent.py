@@ -1,6 +1,6 @@
 import numpy as np
 
-import global_vars
+import utils
 
 class agent():    
     def __init__(self, rows, columns, action_size, LR, discount):

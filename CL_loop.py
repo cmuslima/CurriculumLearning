@@ -7,7 +7,7 @@ from student_agent import agent
 from evaluation import evaluate_task, train
 import numpy as np
 from teacher_agent import DQNAgent
-from global_vars import env_variables
+from utils import env_variables
 
 import torch
 import env
