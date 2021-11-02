@@ -5,7 +5,7 @@ from evaluate_teacher import run_evaluate_teacher
 parser = argparse.ArgumentParser()
 
 #Put the env name as the roordir
-parser.add_argument('--rootdir', type=str, default= './four_rooms2')
+parser.add_argument('--rootdir', type=str, default= './FourRooms')
 #put the state rep as the experiment folder
 parser.add_argument('--experiment_folder', type=str, default= 'action_return')
 parser.add_argument('--env', type=str, default= 'four_rooms')
