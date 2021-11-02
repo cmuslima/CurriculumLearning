@@ -20,7 +20,7 @@ def run(args):
         print(f'run {seed}')
     
         teacher_return_list, teacher_scores  = CL_loop(seed, args)
-        print(f'returns on run {r}, {teacher_return_list}')
+        print(f'returns on run {seed}, {teacher_return_list}')
         all_teacher_returns.append(teacher_return_list)
         all_teacher_scores.append(teacher_scores)
     averaged_returns = [np.mean(np.array(all_teacher_returns), axis = 0), np.std(np.array(all_teacher_returns), axis = 0)]

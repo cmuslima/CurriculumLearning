@@ -126,7 +126,7 @@ def eval_loop(num_teaching_episodes, file, seed, args):
             target_task_score, _ = evaluate_task(mystudentagent, env, env_config.live_env.start_state, args)
 
             if args.random_curriculum == False and args.target_only == False:
-                ALP = env_config.get_ALP(source_task_score, teacher_action)
+                ALP = env_config.get_ALP(source_task_score, teacher_action, args)
     
                 update_entry = {str(teacher_action): source_task_score}
                 env_config.returns_dict.update(update_entry)
