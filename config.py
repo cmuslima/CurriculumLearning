@@ -4,7 +4,7 @@ from run_teacher_training_loop import run
 from evaluate_teacher import run_evaluate_teacher
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--rootdir', type=str, default= './Four_Rooms')
+parser.add_argument('--rootdir', type=str, default= './FourRooms')
 parser.add_argument('--experiment_folder', type=str, default= 'action_return')
 parser.add_argument('--env', type=str, default= 'four_rooms')
 parser.add_argument('--SR', type=str, default= 'action_return')
