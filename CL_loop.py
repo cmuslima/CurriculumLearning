@@ -46,7 +46,7 @@ def CL_loop(seed, args):
             print(f'there are {env_config.student_num_actions} actions')
     
         env = env_config.live_env
-        env_config.initalize_ALP_dict()
+        env_config.reset(args)
         mystudentagent.initalize_q_matrix() 
        
                                                                        
