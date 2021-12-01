@@ -66,7 +66,10 @@ class env_variables():
         self.initalize_state_space()
         
 
-
+    def reset(self, args):
+        self.state_SF = [0]*self.teacher_action_size    
+        self.initalize_ALP_dict()
+        self.determine_target_task_success_threshold(args)
     
     def initalize_state_space(self):
         if self.SR == 'SF_with_time_step':
