@@ -346,7 +346,7 @@ class env_variables():
 
             
     def check_for_success_on_target_task(self, target_task_score, args):
-        self.determine_target_task_success_threshold(args)
+        
         if target_task_score > self.target_task_success_threshold:
             target_task_reward = 0
             if args.debug:
