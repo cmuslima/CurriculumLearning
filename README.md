@@ -8,6 +8,8 @@ run_eval_loop file contains the main function (run_evaluation_loop) which evalua
 
 config.py file is where you specify all the parameters + hyperparameters, then this file will execute the training and evaluation loop for the teacher. 
 
+Implentation only works for tabular problems. #todo upload DDPG and PPO agents for Minigrid Four Rooms and Fetch Reach.
+
 
 
 
