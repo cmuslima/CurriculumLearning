@@ -2,32 +2,12 @@
 import sys
 import argparse
 import utils
-from run_training_loop import run_train_loop
-from run_eval_loop import run_evaluation_loop
-import visualize_loop
 
 import plotting_graphs_updated
-import average
-import teacher_data_plot
+#import average
+#from plotting_graphs import plotting, plot_actions
+#from average import average_data, get_data
 
-def main(args):
-    print('\n\n\n\n main function called \n\n\n\n')
-    utils.make_dir(args, args.rootdir)
-
-    if args.training:
-        run_train_loop(args)
-                        #run_evaluation_loop(args)
-
- 
-    if args.evaluation:
-        run_evaluation_loop(args)
-
-    if args.plotting:
-        #data = utils.get_data('student_scores_buffer_policy_simple_LP_0.0001_64_50_all_seeds')
-        #print(data)
-        average.average_data(args)
-        plotting_graphs_updated.plot_single_baseline(args)
- 
 
 if __name__ == '__main__':
     print('\n\n\n\n\n\n\n main called \n\n\n\n\n\n\n\n')
@@ -45,7 +25,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--student_transfer', type=bool, default= False)
     parser.add_argument('--student_lr_transfer', type=bool, default= False)
-    parser.add_argument('--student_NN_transfer', type=bool, default= False)
     parser.add_argument('--random_student_seed', type=bool, default= True)
     parser.add_argument('--student_discount', type=float, default= .99)
     parser.add_argument('--student_eps', type=float, default= .01)
@@ -95,8 +74,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--debug', type=bool, default= False)
     parser.add_argument('--num_runs_start', type=int, default= 0)
-    parser.add_argument('--num_runs_end', type=int, default= 30)
-    parser.add_argument('--num_runs', type=int, default= 30)
+    parser.add_argument('--num_runs_end', type=int, default= 10)
+    parser.add_argument('--num_runs', type=int, default= 10)
 
     parser.add_argument('--num_student_processes', type=int, default= 1)
     parser.add_argument('--MP', type=bool, default = False)
@@ -108,11 +87,9 @@ if __name__ == '__main__':
 
 
 
-    parser.add_argument('--training', type=bool, default = False)
+    parser.add_argument('--training', type=bool, default = True)
     parser.add_argument('--evaluation', type=bool, default = False)
-    parser.add_argument('--plotting', type=bool, default = True)
-    parser.add_argument('--average', type=bool, default = False)
-    parser.add_argument('--AUC', type=bool, default = True)
+    parser.add_argument('--plotting', type=bool, default = False)
     parser.add_argument('--saving_method', type=str, default = 'exceeds_average')
     parser.add_argument('--folder_name', type=str, default = 'None')
 
@@ -183,7 +160,7 @@ if __name__ == '__main__':
     # open AI baseline students
 
     parser.add_argument('--alg', help='Algorithm', type=str, default='her')
-    parser.add_argument('--total_timesteps', type=float, default=10000), #100050
+    parser.add_argument('--total_timesteps', type=float, default=10001), #100050
     parser.add_argument('--network', help='network type (mlp, cnn, lstm, cnn_lstm, conv_only)', default='mlp')
     parser.add_argument('--gamestate', help='game state to load (so far only used in retro games)', default=None)
     parser.add_argument('--num_env', help='Number of environment copies being run in parallel. When not specified, set to number of cpus for Atari, and to 1 for Mujoco', default=2, type=int)
@@ -197,7 +174,7 @@ if __name__ == '__main__':
 
 
     #plotting arguments
-    parser.add_argument('--single_baseline_comp', type=bool, default=True)
+    parser.add_argument('--single_baseline_comp', type=bool, default=False)
     parser.add_argument('--comparing_scores', type=bool, default=True)
     parser.add_argument('--plot_best_data', type=bool, default=True)
     parser.add_argument('--stagnation', type=bool, default=True)
@@ -220,11 +197,10 @@ if __name__ == '__main__':
         args.teacher_network_hidden_size = 64
         args.tabular = True
         args.teacher_episodes = 300
-        args.student_episodes = 100 #*150
+        args.student_episodes = 100
         args.three_layer_network = False
         args.num_tiles = 8
         args.stagnation = True
-        args.num_runs = 30
         if args.Narvekar2017:
             args.reward_function ='Narvekar2017'
             args.SR = 'params'
@@ -240,26 +216,6 @@ if __name__ == '__main__':
         if args.L2T:
             args.reward_function ='L2T'
             args.SR = 'L2T'       
-    elif args.env == 'expanded_fourrooms': #once I update the env code such that I only have one code for all environments, this will be more useful
-        args.rows = 7
-        args.columns = 10
-        args.student_num_actions = 4
-        args.max_time_step = 20
-        args.num_evaluation_episodes = 30
-        args.num_training_episodes = 2
-        args.student_lr = .5
-        args.student_input_size = 2
-        args.student_output_size = 4
-        args.hidden_size_input = 32
-        args.hidden_size_output = 32
-        args.teacher_network_hidden_size = 64
-        args.tabular = True
-        args.teacher_episodes = 300
-        args.student_episodes = 50
-        args.three_layer_network = False
-        args.num_tiles = 8
-        args.stagnation = True
-      
     elif args.env == 'cliff_world': #once I update the env code such that I only have one code for all environments, this will be more useful
         args.rows = 4
         args.columns = 12
@@ -300,7 +256,7 @@ if __name__ == '__main__':
         args.three_layer_network = False
         args.normalize = False
     elif args.env == 'four_rooms':
-        args.num_runs = 30
+
         args.tabular = False
         args.student_input_size = 243
         args.student_output_size = 3
@@ -318,7 +274,7 @@ if __name__ == '__main__':
         args.memory = args.recurrence > 1
         args.target_task = f'MiniGrid-Simple-4rooms-0-v0'
         #utils.make_dir(args, f'{args.rootdir}/models')
-        args.model_folder_path = f'{args.SR}_{args.teacher_batchsize}_{args.teacher_lr}_{args.reward_function}_{args.teacher_buffersize}_{args.num_runs_start}64_128'
+        args.model_folder_path = f'{args.SR}_{args.teacher_batchsize}_{args.teacher_lr}_{args.reward_function}_{args.teacher_buffersize}_{args.num_runs_start}'
         args.three_layer_network = False
         
         
@@ -340,7 +296,7 @@ if __name__ == '__main__':
         args.three_layer_network = False
         args.tabular = False
         args.num_env = 1
-        args.num_runs = 30
+
     if args.env == 'fetch_push':
         args.num_evaluation_episodes = 80
         args.student_input_size = 25
@@ -356,103 +312,30 @@ if __name__ == '__main__':
         args.num_env = 2
 
 
+    #for maze: LR = .001, .005, batchsizes = 64, 128,256, buffer sizes - 75,100
 
-    if args.training:
-        learning_rates = [.001]
-        buffer_sizes = [10]
-        batch_sizes = [16] 
-        state = 'buffer_q_table' #'L2T' #'buffer_policy', 'buffer_q_table', 'params' need to do these with L2T
-        rf_list = ['target_task_score'] #'LP', 'target_task_score', '0_target_task_score', 'cost', 'L2T', 'cost
-        for rf in rf_list:
-            for buffer in buffer_sizes:
-                for batch_size in batch_sizes:
-                    for lr in learning_rates:
-                        
-                        args.SR = state
-                        args.reward_function = rf
-                        args.teacher_batchsize = batch_size
+    learning_rates = [.001]
+    buffer_sizes = [100]
+    batch_sizes = [256] 
+    SR = ['loss_mismatch'] #'L2T' #'buffer_policy', 'buffer_q_table', 'params' need to do these with L2T
+    rf = ['binary_LP'] #'cost', 'simple_LP'
+    for state_rep in SR:
+        # if 'buffer' not in state_rep:
+        #     buffer_sizes = [1] #this is because we don't need to do any loops over buffer size for the not behavior embedded state reps
+        for reward in rf:
+            for lr in learning_rates:
+                for buffer in buffer_sizes:
+                    for batch in batch_sizes:     
+                        assert args.total_timesteps == 10001  
+                        args.teacher_batchsize = batch
                         args.teacher_lr = lr
                         args.teacher_buffersize = buffer
-                        
-                        
-                        args.model_folder_path = f'{args.SR}_{args.teacher_batchsize}_{args.teacher_lr}_{args.reward_function}_{args.teacher_buffersize}_{args.num_runs_start}_target'
+                        args.SR = state_rep
+                        args.reward_function = reward
+                        args.model_folder_path = f'{args.SR}_{args.teacher_batchsize}_{args.teacher_lr}_{args.reward_function}_{args.teacher_buffersize}_{args.num_runs_start}'
 
-                        args.rootdir = utils.get_rootdir(args, args.SR)
-                        print(args.rootdir)
-                        utils.make_dir(args, args.rootdir)
-                        print(f'Root dir = {args.rootdir}')
-                        incomplete = False
-                        if 'buffer' in state:
-                            file = f'{args.rootdir}/teacher-data/teacher_return_list_{state}_{rf}_{lr}_{batch_size}_{buffer}_{args.num_runs_start}'
-                        else:
-                            file = f'{args.rootdir}/teacher-data/teacher_return_list_{state}_{rf}_{lr}_{batch_size}_{args.num_runs_start}'
-
-                        run_train_loop(args)
-                        
-    
-
-    if args.evaluation:
-        if args.random_curriculum == True or args.handcrafted == True or args.target_task_only:
-            args.teacher_agent = 'None'
-        learning_rates = [ .001]
-        buffer_sizes = [100]
-        batch_sizes = [128] 
-        SR = ['buffer_action'] #'L2T' #'buffer_policy', 'buffer_q_table', 'params' need to do these with L2T
-        rf = ['simple_LP'] 
-        student_lr = [.5]
-        
-        for state_rep in SR:
-            # if 'buffer' not in state_rep:
-            #     buffer_sizes = [1] #this is because we don't need to do any loops over buffer size for the not behavior embedded state reps
-            for reward in rf:
-                for lr in learning_rates:
-                    for buffer in buffer_sizes:
-                        for batch in batch_sizes:     
-                            for student_l in student_lr:
-                                #args.student_lr = student_l
-                                args.teacher_batchsize = batch
-                                args.teacher_lr = lr
-                                args.teacher_buffersize = buffer
-                                args.SR = state_rep
-                                args.reward_function = reward
-                                args.model_folder_path = f'{args.SR}_{args.teacher_batchsize}_{args.teacher_lr}_{args.reward_function}_{args.teacher_buffersize}_{args.num_runs_start}_random'
-
-                                args.rootdir = utils.get_rootdir(args, args.SR)
-                                utils.make_dir(args, args.rootdir)
-                                print('\n\n\n\n\n config \n\n\n\n\n')
-                                print("Running experiment with a single student", args.student_type)
-                                print(f'Root dir = {args.rootdir}')
-                                run_evaluation_loop(args)
-                                #visualize_loop.visualize(args)
- 
-
-    if args.plotting:
-        learning_rates = [ .001]
-        buffer_sizes = [100]
-        batch_sizes = [128] 
-        SR = ['random'] #'L2T' #'buffer_policy', 'buffer_q_table', 'params' need to do these with L2T
-        rf = ['random'] 
-        student_lrs = [.0001, .001, .01, .25]
-        for state_rep in SR:
-            # if 'buffer' not in state_rep:
-            #     buffer_sizes = [1] #this is because we don't need to do any loops over buffer size for the not behavior embedded state reps
-            for reward in rf:
-                for lr in learning_rates:
-                    for buffer in buffer_sizes:
-                        for batch in batch_sizes:     
-                            #for student_lr in student_lrs:
-                            #args.student_lr = student_lr  
-                            args.teacher_batchsize = batch
-                            args.teacher_lr = lr
-                            args.teacher_buffersize = buffer
-                            args.SR = state_rep
-                            args.reward_function = reward
-                            args.model_folder_path = f'{args.SR}_{args.teacher_batchsize}_{args.teacher_lr}_{args.reward_function}_{args.teacher_buffersize}_{args.num_runs_start}'
-                            
-                            args.rootdir = utils.get_rootdir(args, args.SR)
-                            print('args.rootdir on config', args.rootdir)
-                            average.average_data(args)
+                        args.rootdir = utils.get_rootdir_plot(args, args.SR)
+                        print('args.rootdir', args.rootdir)
+                        plotting_graphs_updated.check_data(args, args.rootdir)
 
 
-        #plotting_graphs_updated.plot_single_baseline(args)
-        #plotting_graphs_updated.t_testing(args)

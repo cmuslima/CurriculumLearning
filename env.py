@@ -1,5 +1,5 @@
 import numpy as np
-import random
+
 
 class lavaworld():
     def __init__(self, rows, columns, oneDmaze):       
@@ -75,14 +75,14 @@ class lavaworld():
         return next_state 
 
 class four_rooms():
-    def __init__(self, rows, columns, oneDmaze):       
+    def __init__(self):       
         self.start_state= np.array([0,0])  #target start state   
         self.termination_state= np.array([5,4])    
 
         self.blocked_states= [(3,0), (0,3), (6,3), (3,6), (2,3), (4,3), (3,2), (3,3), (3,4)]
-        self.rows=rows
-        self.columns=columns
-        self.oneDmaze = oneDmaze
+        self.rows=7
+        self.columns=7
+        self.oneDmaze = False
         self.up=np.array([-1,0])  #0
         self.down=np.array([1, 0]) # 1
         self.left=np.array([0, -1]) # 2
@@ -123,14 +123,14 @@ class four_rooms():
 
 
 class expanded_four_rooms():
-    def __init__(self, rows, columns, oneDmaze):       
+    def __init__(self):       
         self.start_state= np.array([0,0])  #target start state   
         self.termination_state= np.array([5,4])    
 
         self.blocked_states= [(3,0), (0,3), (6,3), (3,6), (2,3), (4,3), (3,2), (3,3), (3,4)]
-        self.rows=rows
-        self.columns=columns
-        self.oneDmaze = oneDmaze
+        self.rows=7
+        self.columns=10
+        self.oneDmaze = False
         self.up=np.array([-1,0])  #0
         self.down=np.array([1, 0]) # 1
         self.left=np.array([0, -1]) # 2
@@ -170,20 +170,22 @@ class expanded_four_rooms():
         return next_state 
 
 class maze():
-    def __init__(self, rows, columns, oneDmaze):       
+    def __init__(self):       
         self.start_state= np.array([10,4])  #target start state   
         self.termination_state= np.array([0,15])    
 
         self.blocked_states= [(0,3), (2,3), (3,3), (4,3), (5,3), (6,3), (7,3), (8,3), (9,3), (10,3), (3,0), (3,1), (3,2), (7,0), (7,1), (7,2), (3,4), (3,5), (7,4), (7,6), (7,7), (3,7), (4,7), (5,7), (6,7), (8,7), (9,7), (10,7), (0,6), (1,6), (6,8), (6,9), (6,10), (0,10), (1,10), (2,10), (3,10),(8,10), (9,10),(10,10), (5,12), (5,13), (5,14), (5,15), (6,12), (7,12), (8,13), (8,14), (8,15)]
 
-        self.rows=rows
-        self.columns=columns
-        self.oneDmaze = oneDmaze
+        self.rows=11
+        self.columns=16
+        self.oneDmaze = False
         self.up=np.array([-1,0])  #0
         self.down=np.array([1, 0]) # 1
         self.left=np.array([0, -1]) # 2
         self.right=np.array([0, 1])  #3
         self.action_list=[(self.up, 0),(self.down, 1), (self.left,2), (self.right, 3)]
+        self.state_buffer = []
+        self.action_buffer = []
 
 
     def check_reward(self, state):
@@ -205,6 +207,15 @@ class maze():
 
         return reward, terminal
 
+
+    # def add_to_buffer(self, state):        
+    #     for value in self.buffer:
+    #         if np.array_equal(state, value):
+    #             #print(f'state {state} already in buffer')
+    #             return
+    #     else:
+    #         self.buffer.append(state)
+            #print('adding new state', state)
     def check_state(self, next_state, state):
         
         next_state_tuple= tuple(next_state)
@@ -214,5 +225,52 @@ class maze():
 
         if next_state_tuple in self.blocked_states: # bc if this happens it wouldnt be near a blocked state 
             next_state = state #return back to start state
+            
+        return next_state 
+        
+class cliff_world():
+    def __init__(self, rows, columns, oneDmaze):       
+        self.start_state= np.array([3,0])  #target start state   
+        self.termination_state= np.array([3,11])    
+        self.blocked_states = []
+        for i in range(1,11):
+            self.blocked_states.append((3, i))
+
+        self.rows=4
+        self.columns=12
+        self.oneDmaze = False
+        self.up=np.array([-1,0])  #0
+        self.down=np.array([1, 0]) # 1
+        self.left=np.array([0, -1]) # 2
+        self.right=np.array([0, 1])  #3
+        self.action_list=[(self.up, 0),(self.down, 1), (self.left,2), (self.right, 3)]
+        self.buffer = []
+
+
+    def check_reward(self, state):
+        if np.array_equal(state, self.termination_state) == True:
+            reward = -1
+            #print('won')
+            terminal= True
+        elif tuple(state) in self.blocked_states:
+            reward = -100
+            #print('fell in lava')
+            terminal = True
+
+        else:
+            reward = -1
+            terminal= False
+
+        return reward, terminal
+
+    def check_state(self, next_state, state):
+        
+        next_state_tuple= tuple(next_state)
+        
+        if next_state_tuple[0] == self.rows or next_state_tuple[1] == self.columns  or -1 in next_state_tuple:
+            next_state = state
+
+        # if next_state_tuple in self.blocked_states: # bc if this happens it wouldnt be near a blocked state 
+        #     next_state = state #return back to start state
             
         return next_state 
